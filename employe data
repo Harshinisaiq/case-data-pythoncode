@@ -1,0 +1,62 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+file_path = '/mnt/data/file-51QNtm6Hk4e95yW4g9jRSr'
+
+# Load employee data with correct header row
+employee_df = pd.read_excel(file_path, sheet_name='Employee Data', header=1)
+
+# Drop empty unnamed column
+employee_df = employee_df.drop(columns=['Unnamed: 0'])
+
+# Rename columns for consistency
+employee_df = employee_df.rename(columns={
+    'Years of Experience': 'Years_of_Experience',
+    'Active?': 'Active',
+    'Current Comp (INR)': 'Current_Comp_INR',
+    'Last Working Day': 'Last_Working_Day'
+})
+
+# Convert compensation to numeric
+employee_df['Current_Comp_INR'] = pd.to_numeric(employee_df['Current_Comp_INR'], errors='coerce')
+
+# Aggregate average compensation by Role and Location
+avg_comp_role_loc = employee_df.groupby(['Role', 'Location'])['Current_Comp_INR'].mean().reset_index().sort_values(by='Current_Comp_INR', ascending=False)
+
+# Aggregate average compensation by Role only
+avg_comp_role = employee_df.groupby('Role')['Current_Comp_INR'].mean().reset_index().sort_values(by='Current_Comp_INR', ascending=False)
+
+# Aggregate average compensation by Location only
+avg_comp_loc = employee_df.groupby('Location')['Current_Comp_INR'].mean().reset_index().sort_values(by='Current_Comp_INR', ascending=False)
+
+# Filter active employees
+active_employees = employee_df[employee_df['Active'].str.upper() == 'Y']
+
+# Aggregate average compensation for active employees by Role
+avg_comp_active_role = active_employees.groupby('Role')['Current_Comp_INR'].mean().reset_index().sort_values(by='Current_Comp_INR', ascending=False)
+
+# Save aggregated data as CSV files
+avg_comp_role_loc.to_csv('/mnt/data/file-51QNtm6Hk4e95yW4g9jRSr_avg_comp_role_location.csv', index=False)
+avg_comp_role.to_csv('/mnt/data/file-51QNtm6Hk4e95yW4g9jRSr_avg_comp_role.csv', index=False)
+avg_comp_loc.to_csv('/mnt/data/file-51QNtm6Hk4e95yW4g9jRSr_avg_comp_location.csv', index=False)
+avg_comp_active_role.to_csv('/mnt/data/file-51QNtm6Hk4e95yW4g9jRSr_avg_comp_active_role.csv', index=False)
+
+# Plot average compensation by Role
+plt.figure(figsize=(10,6))
+plt.bar(avg_comp_role['Role'], avg_comp_role['Current_Comp_INR'])
+plt.ylabel('Average Compensation (INR)')
+plt.title('Average Employee Compensation by Role')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.savefig('/mnt/data/file-51QNtm6Hk4e95yW4g9jRSr_avg_comp_role.png')
+plt.close()
+
+# Plot average compensation by Location
+plt.figure(figsize=(10,6))
+plt.bar(avg_comp_loc['Location'], avg_comp_loc['Current_Comp_INR'])
+plt.ylabel('Average Compensation (INR)')
+plt.title('Average Employee Compensation by Location')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.savefig('/mnt/data/file-51QNtm6Hk4e95yW4g9jRSr_avg_comp_location.png')
+plt.close()
