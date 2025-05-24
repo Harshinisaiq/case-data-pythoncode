@@ -1,0 +1,52 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+file_path = '/mnt/data/file-51QNtm6Hk4e95yW4g9jRSr'
+
+# Load sheets
+employee_df = pd.read_excel(file_path, sheet_name='Employee Data', skiprows=1)
+industry_df = pd.read_excel(file_path, sheet_name='Average Industry Compensation', skiprows=1)
+rating_df = pd.read_excel(file_path, sheet_name='Employee Rating', skiprows=1)
+
+# Rename columns for clarity
+employee_df.columns = ['Name', 'Role', 'Location', 'Years_of_Experience', 'Active', 'Current_Comp_INR', 'Last_Working_Day']
+industry_df.columns = ['Location', 'Role', 'Average_Industry_Compensation']
+rating_df.columns = ['Name', 'Role', 'Location', 'Years_of_Experience', 'Self_Rating', 'Manager_Rating']
+
+# Convert data types
+employee_df['Current_Comp_INR'] = pd.to_numeric(employee_df['Current_Comp_INR'], errors='coerce')
+industry_df['Average_Industry_Compensation'] = pd.to_numeric(industry_df['Average_Industry_Compensation'], errors='coerce')
+rating_df['Self_Rating'] = pd.to_numeric(rating_df['Self_Rating'], errors='coerce')
+rating_df['Manager_Rating'] = pd.to_numeric(rating_df['Manager_Rating'], errors='coerce')
+
+# Summary statistics
+print("Employee Data Summary:")
+print(employee_df.describe(include='all'))
+
+print("\nIndustry Compensation Summary:")
+print(industry_df.describe())
+
+print("\nEmployee Rating Summary:")
+print(rating_df.describe())
+
+# Aggregate average compensation by Role and Location
+avg_comp = employee_df.groupby(['Role', 'Location'])['Current_Comp_INR'].mean().reset_index().sort_values(by='Current_Comp_INR', ascending=False)
+print("\nAverage Compensation by Role and Location:")
+print(avg_comp)
+
+# Join employee data with industry compensation on Role and Location
+merged_df = pd.merge(employee_df, industry_df, on=['Role', 'Location'], how='left')
+
+# Filter active employees
+active_employees = employee_df[employee_df['Active'].str.upper() == 'Y']
+
+# Plot average compensation by Role
+plt.figure(figsize=(10,6))
+avg_comp_plot = avg_comp.groupby('Role')['Current_Comp_INR'].mean().sort_values(ascending=False)
+avg_comp_plot.plot(kind='bar')
+plt.ylabel('Average Compensation (INR)')
+plt.title('Average Employee Compensation by Role')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.savefig('/mnt/data/file-51QNtm6Hk4e95yW4g9jRSr_avg_comp_by_role.png')
+plt.show()
